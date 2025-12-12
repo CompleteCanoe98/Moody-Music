@@ -18,7 +18,7 @@ Because this is a Flutter project, you will need the Flutter SDK installed on yo
 1.  **Clone the Repository**
     Open your terminal and run:
     ```bash
-    git clone [https://github.com/CompleteCanoe98/Moody-Music.git](https://github.com/CompleteCanoe98/Moody-Music.git)
+    git clone https://github.com/CompleteCanoe98/Moody-Music.git
     cd Moody-Music
     ```
 
@@ -51,3 +51,4 @@ Because this is a Flutter project, you will need the Flutter SDK installed on yo
     *Ensure your iPhone is connected via USB and unlocked.*
 
 ---
+
