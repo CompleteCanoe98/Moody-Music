@@ -2,6 +2,8 @@
 
 A music app built with Flutter that plays songs based on your mood.
 
+-In Progress, not Available for Android yet- 
+
 ## 📱 How to Run on iOS
 
 Because this is a Flutter project, you will need the Flutter SDK installed on your Mac to build the app.
@@ -51,4 +53,5 @@ Because this is a Flutter project, you will need the Flutter SDK installed on yo
     *Ensure your iPhone is connected via USB and unlocked.*
 
 ---
+
 
