@@ -42,13 +42,13 @@ Because this is a Flutter project, you will need the Flutter SDK installed on yo
     * Open the file `ios/Runner.xcworkspace` in Xcode (do not open `.xcodeproj`).
     * Click on **Runner** in the left sidebar.
     * Select the **Signing & Capabilities** tab.
-    * **Team:** Select your Apple ID (Add Account if needed).
-    * **Bundle Identifier:** Ensure this matches the Redirect URI you set in the Spotify Developer Dashboard (e.g., `com.yourname.moodymusic`).
+    * **Team:** Select your Apple ID (Add Account if needed)..
 
 5.  **Run the App**
+
     * You can run it directly from within XCODE by pressing the play button on the top left when runner is selected.
-    
-    *Ensure your iPhone is connected via USB and unlocked.*
+
+    *Ensure your iPhone is connected via USB and unlocked. Ensure Developer Mode on the Phone is on*
 
 ---
 
