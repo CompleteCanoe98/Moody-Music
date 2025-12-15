@@ -59,19 +59,28 @@ class _MyHomePageState extends State<MyHomePage> {
           widget.title,
           style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
         ),
-        shape: const RoundedRectangleBorder(
-          borderRadius: BorderRadius.vertical(bottom: Radius.circular(8)),
-        ),
         automaticallyImplyLeading: false,
         toolbarHeight: 60,
         shadowColor: const Color(0xFF7C4DFF),
         elevation: 20,
       ),
-      body: Center(
+      body: Container(
+        height: size.height,
+        width: double.infinity,
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [
+              Color(0xFFB388FF),
+              Color.fromARGB(255, 115, 64, 253) // Deep Purple Accet
+            ],
+          ),
+        ),
         child: SingleChildScrollView(
           child: Column(
             children: [
-              SizedBox(height: size.height * 0.02), // 10% of screen height
+              SizedBox(height: size.height * 0.05), // 10% of screen height
               
               const Text(
                 'Welcome to Moody Music!',
@@ -184,7 +193,7 @@ class _MyHomePageState extends State<MyHomePage> {
               // --- CHANGED SECTION: USING LOCAL ASSET GIF ---
               Image.asset(
                 'assets/gifs/spinningCd.gif', // <--- MAKE SURE FILENAME MATCHES YOURS
-                height: size.height * 0.30, 
+                height: size.height * 0.3, 
                 fit: BoxFit.contain, 
                 errorBuilder: (context, error, stackTrace) {
                   // This error usually means you forgot Step 2 (updating pubspec.yaml)
