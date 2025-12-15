@@ -67,11 +67,11 @@ Since this app uses the Spotify SDK, you will need your own credentials to run i
 
 5. ## Running the App
 
-1.  **Connect your iPhone** via USB to your Mac.
-2.  **Unlock the phone** and ensure **Developer Mode** is turned **On**.
+  **Connect your iPhone** via USB to your Mac.
+  **Unlock the phone** and ensure **Developer Mode** is turned **On**.
     * *Go to: Settings > Privacy & Security > Developer Mode.*
-3.  In Xcode, **select your connected iPhone** from the device list (top center of the window).
-4.  Press the **Play** button (top left) or press `Cmd + R` to build and run the app.
+  In Xcode, **select your connected iPhone** from the device list (top center of the window).
+  Press the **Play** button (top left) or press `Cmd + R` to build and run the app.
 
 ### Troubleshooting: "Untrusted Developer" Error
 If the app installs successfully but fails to launch with a security popup on your iPhone:
