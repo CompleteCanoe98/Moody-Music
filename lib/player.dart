@@ -5,13 +5,14 @@ import 'package:flutter_svg/flutter_svg.dart';
 import 'package:spotify_sdk/models/image_uri.dart';
 import 'dart:typed_data';
 import 'package:marquee/marquee.dart';
-import 'package:flutter_dotenv/flutter_dotenv.dart'; // Don't forget to import!
+import 'package:flutter_dotenv/flutter_dotenv.dart'; 
 import 'dart:async';
 
 class Music_Player extends StatefulWidget {
   final String mood;
+  final String genre;
 
-  const Music_Player({super.key, required this.mood});
+  const Music_Player({super.key, required this.mood, required this.genre});
 
   @override
   State<Music_Player> createState() => _Music_PlayerState();
@@ -30,13 +31,61 @@ class _Music_PlayerState extends State<Music_Player> {
   
   // LOGIC VARIABLES
   String? _lastImageId;
-  StreamSubscription? _playerSubscription; // <--- 1. NEW: To track the listener
+  StreamSubscription? _playerSubscription;
 
-  final Map<String, String> moodPlaylists = {
-    'Happy': 'spotify:playlist:37i9dQZF1DXdPec7aLTmlC', 
-    'Sad': 'spotify:playlist:37i9dQZF1DWSqBruwoIXkA',   
-    'Hype': 'spotify:playlist:37i9dQZF1EIeU3RFfPV9ui', 
-    'Calm': 'spotify:playlist:37i9dQZF1DWZeKCadgRdKQ',  
+  // --- PLAYLIST DATA ---
+  final Map<String, String> mixMoodPlaylists = {
+    'Happy' : 'spotify:playlist:37i9dQZF1EIgNoWOvbnUCk',
+    'Sad' : 'spotify:playlist:37i9dQZF1EIhmSBwUDxg84',
+    'Hype' : 'spotify:playlist:37i9dQZF1EIeU3RFfPV9ui',
+    'Calm' : 'spotify:playlist:37i9dQZF1EIe7gYhF3NROX'
+
+  };
+
+
+  final Map<String, String> popmoodPlaylists = {
+    'Happy': 'spotify:playlist:37i9dQZF1EIdYDF5bwm196', 
+    'Sad': 'spotify:playlist:37i9dQZF1EIdZrPvCvCkh4',   
+    'Hype': 'spotify:playlist:37i9dQZF1EIePmEgz7p91b', 
+    'Calm': 'spotify:playlist:37i9dQZF1EIe0Dagt2506d',  
+  };
+
+  final Map<String, String> rockmoodPlaylists = {
+    'Happy': 'spotify:playlist:37i9dQZF1EIhGU9wlBUJK9', 
+    'Sad': 'spotify:playlist:37i9dQZF1EIcxHInSBQ4YQ',   
+    'Hype': 'spotify:playlist:37i9dQZF1EIh4ObqDPnHKI', 
+    'Calm': 'spotify:playlist:37i9dQZF1EIdpDytsjmeSg',  
+  };
+  
+  final Map<String, String> instrumentalmoodPlaylists = {
+    'Happy': 'spotify:playlist:37i9dQZF1EIe3Ecth03qvW', 
+    'Sad': 'spotify:playlist:37i9dQZF1EIh1T1PukZNVG',   
+    'Hype': 'spotify:playlist:37i9dQZF1EIcU1hUUSwSXK', 
+    'Calm': 'spotify:playlist:5gaVqhrTrbBigae3ZAZfbq',  
+  };
+
+  final Map<String, String> hipHopmoodPlaylists = {
+    'Happy': 'spotify:playlist:37i9dQZF1EIcHCl8kCVSai', 
+    'Sad': 'spotify:playlist:37i9dQZF1EIcZUgkA3BSiL',   
+    'Hype': 'spotify:playlist:37i9dQZF1EIfYOWZLm9iq6', 
+    'Calm': 'spotify:playlist:37i9dQZF1EIf4OaZ1XTJYw',  
+  };
+
+  final Map<String, String> jazzmoodPlaylists = {
+    'Happy': 'spotify:playlist:37i9dQZF1DWZCkamcYMQkz', 
+    'Sad': 'spotify:playlist:37i9dQZF1DWWR73B3Bnjfh',   
+    'Hype': 'spotify:playlist:37i9dQZF1EIfmQhasKW8vp', 
+    'Calm': 'spotify:playlist:37i9dQZF1DX949uWWpmTjT',  
+  };
+
+  // FIX: This Master Map now links the Genre String to the correct Map above
+  late final Map<String, Map<String, String>> genrePlaylists = {
+    'Mix' :mixMoodPlaylists,
+    'Pop': popmoodPlaylists,
+    'Rock': rockmoodPlaylists,
+    'Jazz': jazzmoodPlaylists,
+    'Hip-Hop': hipHopmoodPlaylists,
+    'Instrumental': instrumentalmoodPlaylists,
   };
 
   @override
@@ -45,10 +94,9 @@ class _Music_PlayerState extends State<Music_Player> {
     initSpotify();
   }
 
-  // <--- 2. NEW: DISPOSE METHOD (Cleans up when you leave the page)
   @override
   void dispose() {
-    _playerSubscription?.cancel(); // Stop listening to Spotify updates
+    _playerSubscription?.cancel();
     super.dispose();
   }
 
@@ -59,23 +107,19 @@ class _Music_PlayerState extends State<Music_Player> {
         redirectUrl: redirectUrl,
       );
       
-      // <--- 3. NEW: MOUNTED CHECK (Prevents crashes if user left)
       if (!mounted) return;
 
       if (result) {
         setState(() => _isConnected = true);
 
-        // Start listening (and save the subscription so we can cancel it later)
         _playerSubscription = SpotifySdk.subscribePlayerState().listen((playerState) {
-          // Pass the data to a dedicated method to keep this clean
           _updatePlayerUI(playerState);
         }, onError: (error) {
            print("Player State Error: $error");
         });
 
-        // Wait before playing
         await Future.delayed(const Duration(milliseconds: 500));
-        if (!mounted) return; // Check again after delay
+        if (!mounted) return;
         
         playMoodPlaylist();
       }
@@ -88,9 +132,8 @@ class _Music_PlayerState extends State<Music_Player> {
     }
   }
 
-  // <--- 4. NEW: DEDICATED UI UPDATE METHOD
   void _updatePlayerUI(var playerState) {
-    if (!mounted) return; // Safety check
+    if (!mounted) return;
     
     if (playerState.track != null) {
       setState(() {
@@ -99,7 +142,6 @@ class _Music_PlayerState extends State<Music_Player> {
         _isPaused = playerState.isPaused;
       });
 
-      // Image Logic
       var newImageId = playerState.track?.imageUri.raw;
       if (newImageId != null && newImageId != _lastImageId) {
         _lastImageId = newImageId;
@@ -110,17 +152,27 @@ class _Music_PlayerState extends State<Music_Player> {
 
   Future<void> playMoodPlaylist() async {
     try {
-      String? playlistUri = moodPlaylists[widget.mood];
-      if (playlistUri != null) {
-        await SpotifySdk.play(spotifyUri: playlistUri);
-        
-        await Future.delayed(const Duration(milliseconds: 500));
-        if (!mounted) return;
+      // 1. Find the correct map for the selected GENRE
+      Map<String, String>? selectedGenreMap = genrePlaylists[widget.genre];
 
-        // Force Shuffle Logic
-        await SpotifySdk.setShuffle(shuffle: false);
-        await SpotifySdk.setShuffle(shuffle: true);
-        await SpotifySdk.skipNext(); 
+      if (selectedGenreMap != null) {
+        // 2. Find the specific playlist for the selected MOOD
+        String? playlistUri = selectedGenreMap[widget.mood];
+
+        if (playlistUri != null) {
+          await SpotifySdk.play(spotifyUri: playlistUri);
+          
+          await Future.delayed(const Duration(milliseconds: 500));
+          if (!mounted) return;
+
+          await SpotifySdk.setShuffle(shuffle: false);
+          await SpotifySdk.setShuffle(shuffle: true);
+          await SpotifySdk.skipNext(); 
+        } else {
+           _showError("No playlist found for ${widget.mood} in ${widget.genre}");
+        }
+      } else {
+         _showError("Genre ${widget.genre} not found");
       }
     } catch (e) {
       print("Playback error: $e");
@@ -133,7 +185,7 @@ class _Music_PlayerState extends State<Music_Player> {
         imageUri: imageUri,
         dimension: ImageDimension.large,
       );
-      if (!mounted) return; // Safety check before setState
+      if (!mounted) return;
       
       setState(() {
         _albumArt = image;
@@ -143,19 +195,16 @@ class _Music_PlayerState extends State<Music_Player> {
     }
   }
 
-  // <--- 5. NEW: HELPER TO SHOW ERRORS ON SCREEN
   void _showError(String message) {
     if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text(message), backgroundColor: Colors.red),
     );
-    setState(() => _currentSongTitle = "Error Connecting");
+    setState(() => _currentSongTitle = "Error");
   }
 
   @override
   Widget build(BuildContext context) {
-    // ... (Your existing build method goes here unchanged) ...
-    // Just make sure your Container still has the gradient code!
     final size = MediaQuery.of(context).size;
     return Scaffold(
         backgroundColor: const Color.fromARGB(255, 219, 186, 233),
@@ -166,7 +215,6 @@ class _Music_PlayerState extends State<Music_Player> {
         iconTheme: const IconThemeData(color: Colors.white),
       ),
       body: Container( 
-        // Force full screen height for gradient
         height: size.height, 
         width: double.infinity,
         decoration: const BoxDecoration(
@@ -180,31 +228,27 @@ class _Music_PlayerState extends State<Music_Player> {
           ),
         ),
         child: Column(
-             // ... Paste your existing children here ...
              children: [
             SizedBox(height: size.height * 0.05),
             const Text(
               'Playing music for Feeling:', 
-              style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold
-
-              ),
-
+              style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold),
               ),
             SizedBox(height: size.height * 0.005),
             Text(
-              widget.mood,
+              "${widget.mood} (${widget.genre})", // FIX: Show both mood and genre
               style: const TextStyle(
-                fontSize: 40, 
+                fontSize: 32, // Adjusted size slightly to fit both words
                 fontStyle: FontStyle.italic, 
                 fontWeight: FontWeight.bold,
                 shadows: [Shadow(offset: Offset(0, 4), blurRadius: 8.0, color: Colors.purple)],
               ),
+              textAlign: TextAlign.center,
             ),
             SizedBox(height: size.height * 0.02),
             
             // TITLE
             Row(mainAxisAlignment: MainAxisAlignment.center ,
-            
               children: [
                 _isConnected ? const Icon(Icons.music_note, size: 30, color: Colors.black) : const SizedBox.shrink(),
                 _isConnected ? const Text(
@@ -217,9 +261,8 @@ class _Music_PlayerState extends State<Music_Player> {
               padding: const EdgeInsets.symmetric(horizontal: 20),
               child: SizedBox(
                 height: 40,
-                // FIX: Switch widgets based on connection
                 child: _isConnected ?
-                   Marquee( // If connected, use the scrolling widget
+                   Marquee( 
                       text: "$_currentSongTitle - $_currentArtistName    ",
                       style: const TextStyle(fontSize: 28, fontWeight: FontWeight.bold, color: Color.fromARGB(255, 103, 0, 121),
                       shadows: [
@@ -230,7 +273,7 @@ class _Music_PlayerState extends State<Music_Player> {
                       blankSpace: 20.0,
                       velocity: 50.0,
                     )
-                  : const Center( // If NOT connected, just use normal centered text
+                  : const Center( 
                       child: Text(
                         "Connecting...",
                         style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold, color: Colors.black),
@@ -268,10 +311,8 @@ class _Music_PlayerState extends State<Music_Player> {
                     onPressed: () => SpotifySdk.skipPrevious(),
                   ),
                   
-                  // SMART TOGGLE BUTTON (Play/Pause)
                   IconButton(
                     iconSize: 50,
-                    // If Paused -> Show Play Icon. If Playing -> Show Pause Icon.
                     icon: _isPaused 
                       ? SvgPicture.asset('assets/icons/play.svg', height: 50, width: 50, colorFilter: const ColorFilter.mode(Colors.black, BlendMode.srcIn))
                       : SvgPicture.asset('assets/icons/pause.svg', height: 50, width: 50, colorFilter: const ColorFilter.mode(Colors.black, BlendMode.srcIn)),

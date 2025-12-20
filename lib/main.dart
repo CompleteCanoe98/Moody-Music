@@ -40,11 +40,15 @@ class MyHomePage extends StatefulWidget {
 class _MyHomePageState extends State<MyHomePage> {
   final List<String> moods = ['Happy', 'Sad', 'Hype', 'Calm'];
   late String selectedMood;
+  final List<String> genres = ['Mix', 'Pop', 'Rock', 'Jazz', 'Hip-Hop', 'Instrumental'];
+  late String selectedGenre;
 
   @override
   void initState() {
     super.initState();
     selectedMood = moods[0];
+
+    selectedGenre = genres[0];
   }
 
   @override
@@ -91,7 +95,7 @@ class _MyHomePageState extends State<MyHomePage> {
               SizedBox(height: size.height * 0.03), // 3% of screen height
               
               const Text(
-                'Select your current mood:',
+                'Select your current Mood and Genre:',
                 style: TextStyle(fontSize: 18),
               ),
               
@@ -160,17 +164,90 @@ class _MyHomePageState extends State<MyHomePage> {
                       }).toList(),
                     ),
                   ),
+
+                  
                 ),
+                
               ),
 
-              SizedBox(height: size.height * 0.05), // 5% of height
+              SizedBox(height: size.height * 0.005), // 3% of screen height
+
+              Container(
+                width: size.width * 0.7, 
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                decoration: BoxDecoration(
+                  color: const Color.fromARGB(255, 242, 165, 255),
+                  borderRadius: BorderRadius.circular(15),
+                  border: Border.all(color: Colors.deepPurple, width: 4),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.deepPurple.withOpacity(0.3),
+                      offset: const Offset(0, 4),
+                      blurRadius: 8,
+                    ),
+                  ],
+                ),
+                child: Theme(
+                  data: Theme.of(context).copyWith(
+                    splashColor: Colors.deepPurple.withAlpha(100),
+                    highlightColor: Colors.deepPurple.withAlpha(50),
+                  ),
+                  child: DropdownButtonHideUnderline(
+                    child: DropdownButton<String>(
+                      value: selectedGenre,
+                      icon: const Icon(Icons.keyboard_arrow_down_rounded, color: Colors.deepPurple),
+                      iconSize: 32,
+                      isExpanded: true,
+                      elevation: 16,
+                      dropdownColor: const Color.fromARGB(255, 250, 200, 255),
+                      borderRadius: BorderRadius.circular(20),
+                      style: const TextStyle(
+                        fontSize: 24,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.deepPurple,
+                      ),
+                      onChanged: (String? newValue) {
+                        if (newValue != null) {
+                          setState(() {
+                            selectedGenre = newValue;
+                          });
+                        }
+                      },
+                      items: genres.map<DropdownMenuItem<String>>((String genres) {
+                        return DropdownMenuItem<String>(
+                          value: genres,
+                          child: Container(
+                            alignment: Alignment.centerLeft,
+                            width: double.infinity,
+                            decoration: BoxDecoration(
+                              border: Border(
+                                bottom: BorderSide(
+                                  color: Colors.deepPurple.withOpacity(0.5),
+                                  width: 1,
+                                ),
+                              ),
+                            ),
+                            padding: const EdgeInsets.symmetric(vertical: 8),
+                            child: Text(genres),
+                          ),
+                        );
+                      }).toList(),
+                    ),
+                  ),
+
+                  
+                ),
+                
+              ),
+
+              SizedBox(height: size.height * 0.025), // 5% of height
               
               ElevatedButton(
                 onPressed: () {
                   Navigator.push(
                     context,
                     MaterialPageRoute(
-                      builder: (context) => Music_Player(mood: selectedMood),
+                      builder: (context) => Music_Player(mood: selectedMood, genre: selectedGenre,),
                     ),
                   );
                 },
@@ -188,7 +265,7 @@ class _MyHomePageState extends State<MyHomePage> {
                 ),
               ),
 
-              SizedBox(height: size.height * 0.05),
+              SizedBox(height: size.height * 0.03),
 
               // --- CHANGED SECTION: USING LOCAL ASSET GIF ---
               Image.asset(
