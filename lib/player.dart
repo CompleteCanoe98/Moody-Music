@@ -7,6 +7,7 @@ import 'dart:typed_data';
 import 'package:marquee/marquee.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart'; 
 import 'dart:async';
+import 'package:url_launcher/url_launcher.dart';
 
 class Music_Player extends StatefulWidget {
   final String mood;
@@ -29,6 +30,7 @@ class _Music_PlayerState extends State<Music_Player> with SingleTickerProviderSt
   String _currentSongTitle = "Not Playing";
   String _currentArtistName = "Unknown Artist";
   Uint8List? _albumArt;
+  String? songURI;
   
   // LOGIC VARIABLES
   String? _lastImageId;
@@ -40,9 +42,7 @@ class _Music_PlayerState extends State<Music_Player> with SingleTickerProviderSt
     'Sad' : 'spotify:playlist:37i9dQZF1EIhmSBwUDxg84',
     'Hype' : 'spotify:playlist:37i9dQZF1EIeU3RFfPV9ui',
     'Calm' : 'spotify:playlist:37i9dQZF1EIe7gYhF3NROX'
-
   };
-
 
   final Map<String, String> popmoodPlaylists = {
     'Happy': 'spotify:playlist:37i9dQZF1EIdYDF5bwm196', 
@@ -79,7 +79,6 @@ class _Music_PlayerState extends State<Music_Player> with SingleTickerProviderSt
     'Calm': 'spotify:playlist:37i9dQZF1DX949uWWpmTjT',  
   };
 
-  // FIX: This Master Map now links the Genre String to the correct Map above
   late final Map<String, Map<String, String>> genrePlaylists = {
     'Mix' :mixMoodPlaylists,
     'Pop': popmoodPlaylists,
@@ -93,7 +92,7 @@ class _Music_PlayerState extends State<Music_Player> with SingleTickerProviderSt
   void initState() {
     super.initState();
     
-    // ADD THIS: Setup the spinner (10 seconds for one full rotation)
+    // Setup the spinner (10 seconds for one full rotation)
     _rotationController = AnimationController(
       duration: const Duration(seconds: 10), 
       vsync: this,
@@ -104,9 +103,7 @@ class _Music_PlayerState extends State<Music_Player> with SingleTickerProviderSt
 
   @override
   void dispose() {
-    // ADD THIS: Prevent memory leaks
     _rotationController.dispose();
-    
     _playerSubscription?.cancel();
     super.dispose();
   }
@@ -151,14 +148,14 @@ class _Music_PlayerState extends State<Music_Player> with SingleTickerProviderSt
         _currentSongTitle = playerState.track!.name;
         _currentArtistName = playerState.track!.artist.name ?? "Unknown";
         _isPaused = playerState.isPaused;
+        songURI = playerState.track!.uri;
       });
 
-
       if (_isPaused) {
-        _rotationController.stop(); // Stop spinning if paused
+        _rotationController.stop(); 
       } else {
         if (!_rotationController.isAnimating) {
-          _rotationController.repeat(); // Start spinning indefinitely
+          _rotationController.repeat(); 
         }
       }
 
@@ -172,11 +169,9 @@ class _Music_PlayerState extends State<Music_Player> with SingleTickerProviderSt
 
   Future<void> playMoodPlaylist() async {
     try {
-      // 1. Find the correct map for the selected GENRE
       Map<String, String>? selectedGenreMap = genrePlaylists[widget.genre];
 
       if (selectedGenreMap != null) {
-        // 2. Find the specific playlist for the selected MOOD
         String? playlistUri = selectedGenreMap[widget.mood];
 
         if (playlistUri != null) {
@@ -215,6 +210,41 @@ class _Music_PlayerState extends State<Music_Player> with SingleTickerProviderSt
     }
   }
 
+  Future<void> openSpotify() async {
+    if (songURI == null) return;
+
+    try {
+      final Uri uri = Uri.parse(songURI!);
+
+      // 1. Try to open the Spotify App directly
+      if (await canLaunchUrl(uri)) {
+        await launchUrl(uri, mode: LaunchMode.externalApplication);
+      } else {
+        // 2. Fallback: Open the Standard Spotify Web Player
+        final parts = songURI!.split(':');
+        // Valid URI format: spotify:track:12345
+        if (parts.length == 3) {
+           // final type = parts[1]; // track
+           final id = parts[2];     // id
+           
+           // Construct valid web URL: https://open.spotify.com/track/ID
+           final webUri = Uri.parse("https://open.spotify.com/${parts[1]}/$id");
+           
+           if (await canLaunchUrl(webUri)) {
+             await launchUrl(webUri, mode: LaunchMode.externalApplication);
+           } else {
+              _showError("Could not launch web player");
+           }
+        } else {
+          _showError("Invalid Spotify URI");
+        }
+      }
+    } catch (e) {
+      print("Error launching URL: $e");
+      _showError("Could not open Spotify");
+    }
+  }
+
   void _showError(String message) {
     if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
@@ -243,7 +273,7 @@ class _Music_PlayerState extends State<Music_Player> with SingleTickerProviderSt
             end: Alignment(0, 1),
             colors: [
               Color.fromARGB(255, 200, 169, 254),
-              Color.fromARGB(255, 94, 37, 250) // Deep Purple Accet
+              Color.fromARGB(255, 94, 37, 250) // Deep Purple Accent
             ],
           ),
         ),
@@ -256,9 +286,9 @@ class _Music_PlayerState extends State<Music_Player> with SingleTickerProviderSt
               ),
             SizedBox(height: size.height * 0.005),
             Text(
-              "${widget.mood} (${widget.genre})", // FIX: Show both mood and genre
+              "${widget.mood} (${widget.genre})", 
               style: const TextStyle(
-                fontSize: 32, // Adjusted size slightly to fit both words
+                fontSize: 32, 
                 fontStyle: FontStyle.italic, 
                 fontWeight: FontWeight.bold,
                 shadows: [Shadow(offset: Offset(0, 4), blurRadius: 8.0, color: Colors.purple)],
@@ -304,7 +334,6 @@ class _Music_PlayerState extends State<Music_Player> with SingleTickerProviderSt
             
             SizedBox(height: size.height * 0.02),
 
-            // ALBUM ART
             // ROTATING VINYL WIDGET
             RotationTransition(
               turns: _rotationController,
@@ -318,12 +347,12 @@ class _Music_PlayerState extends State<Music_Player> with SingleTickerProviderSt
                     BoxShadow(
                       color: Colors.black.withOpacity(0.4), 
                       blurRadius: 20, 
-                      offset: Offset(0, 10)
+                      offset: const Offset(0, 10)
                     )
                   ],
                 ),
                 child: _albumArt != null
-                    ? ClipOval( // Clips the square image into a circle
+                    ? ClipOval( 
                         child: Image.memory(_albumArt!, fit: BoxFit.cover),
                       )
                     : const Icon(Icons.music_note, size: 100, color: Colors.white54),
@@ -373,6 +402,53 @@ class _Music_PlayerState extends State<Music_Player> with SingleTickerProviderSt
                   ),
                 ],
               ),
+
+            SizedBox(height: size.height * 0.03),
+
+            if (_isConnected)
+              Row(
+                children: [
+                  SizedBox(width: size.width * 0.35),
+                  IconButton(
+                    icon: SvgPicture.asset('assets/icons/add.svg', height: 40, width: 40, colorFilter: const ColorFilter.mode(Colors.black, BlendMode.srcIn)),
+                    onPressed: () async { 
+                      if (songURI != null) {
+                        try {
+                          await SpotifySdk.addToLibrary(spotifyUri: songURI!);
+                          if (context.mounted) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text("Added to Your Library!"),
+                                backgroundColor: Colors.green,
+                              ),
+                            );
+                          }
+                        } catch (e) {
+                          print("Error adding to library: $e");
+                        }
+                      }
+                    },
+                    splashColor: Colors.white.withOpacity(0.5),
+                    highlightColor: Colors.white.withOpacity(0.5),
+                    splashRadius: 20,
+                  ),
+
+                  SizedBox(width: size.width * 0.04),
+
+                  IconButton(
+                    onPressed: openSpotify, 
+                    icon: SvgPicture.asset(
+                      'assets/icons/spotify.svg', 
+                      height: 40, 
+                      width: 40, 
+                      colorFilter: const ColorFilter.mode(Colors.black, BlendMode.srcIn)
+                    ),
+                    splashColor: Colors.white.withOpacity(0.5),
+                    highlightColor: Colors.white.withOpacity(0.5),
+                    splashRadius: 20,
+                  ),
+                ],
+              )
           ],
         )
       )
