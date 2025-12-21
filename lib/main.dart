@@ -73,11 +73,11 @@ class _MyHomePageState extends State<MyHomePage> {
         width: double.infinity,
         decoration: const BoxDecoration(
           gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
+            begin: Alignment(0, -1),
+            end: Alignment(0, 1),
             colors: [
-              Color(0xFFB388FF),
-              Color.fromARGB(255, 115, 64, 253) // Deep Purple Accet
+              Color.fromARGB(255, 200, 169, 254),
+              Color.fromARGB(255, 94, 37, 250) // Deep Purple Accet
             ],
           ),
         ),

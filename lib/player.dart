@@ -18,11 +18,12 @@ class Music_Player extends StatefulWidget {
   State<Music_Player> createState() => _Music_PlayerState();
 }
 
-class _Music_PlayerState extends State<Music_Player> {
+class _Music_PlayerState extends State<Music_Player> with SingleTickerProviderStateMixin {
   final String clientId = dotenv.env['SPOTIFY_CLIENT_ID'] ?? '';
   final String redirectUrl = dotenv.env['SPOTIFY_REDIRECT_URL'] ?? '';
 
   // STATE VARIABLES
+  late final AnimationController _rotationController;
   bool _isConnected = false;
   bool _isPaused = false;
   String _currentSongTitle = "Not Playing";
@@ -91,11 +92,21 @@ class _Music_PlayerState extends State<Music_Player> {
   @override
   void initState() {
     super.initState();
+    
+    // ADD THIS: Setup the spinner (10 seconds for one full rotation)
+    _rotationController = AnimationController(
+      duration: const Duration(seconds: 10), 
+      vsync: this,
+    );
+
     initSpotify();
   }
 
   @override
   void dispose() {
+    // ADD THIS: Prevent memory leaks
+    _rotationController.dispose();
+    
     _playerSubscription?.cancel();
     super.dispose();
   }
@@ -141,6 +152,15 @@ class _Music_PlayerState extends State<Music_Player> {
         _currentArtistName = playerState.track!.artist.name ?? "Unknown";
         _isPaused = playerState.isPaused;
       });
+
+
+      if (_isPaused) {
+        _rotationController.stop(); // Stop spinning if paused
+      } else {
+        if (!_rotationController.isAnimating) {
+          _rotationController.repeat(); // Start spinning indefinitely
+        }
+      }
 
       var newImageId = playerState.track?.imageUri.raw;
       if (newImageId != null && newImageId != _lastImageId) {
@@ -219,11 +239,11 @@ class _Music_PlayerState extends State<Music_Player> {
         width: double.infinity,
         decoration: const BoxDecoration(
           gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
+            begin: Alignment(0, -1),
+            end: Alignment(0, 1),
             colors: [
-              Color(0xFFB388FF),
-              Color.fromARGB(255, 115, 64, 253)
+              Color.fromARGB(255, 200, 169, 254),
+              Color.fromARGB(255, 94, 37, 250) // Deep Purple Accet
             ],
           ),
         ),
@@ -285,17 +305,29 @@ class _Music_PlayerState extends State<Music_Player> {
             SizedBox(height: size.height * 0.02),
 
             // ALBUM ART
-            Container(
-              height: 300,
-              width: 300,
-              decoration: BoxDecoration(
-                color: Colors.black12,
-                borderRadius: BorderRadius.circular(20),
-                boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.3), blurRadius: 15, offset: const Offset(0, 10))],
+            // ROTATING VINYL WIDGET
+            RotationTransition(
+              turns: _rotationController,
+              child: Container(
+                height: 300,
+                width: 300,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: Colors.black,
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.4), 
+                      blurRadius: 20, 
+                      offset: Offset(0, 10)
+                    )
+                  ],
+                ),
+                child: _albumArt != null
+                    ? ClipOval( // Clips the square image into a circle
+                        child: Image.memory(_albumArt!, fit: BoxFit.cover),
+                      )
+                    : const Icon(Icons.music_note, size: 100, color: Colors.white54),
               ),
-              child: _albumArt != null
-                  ? ClipRRect(borderRadius: BorderRadius.circular(20), child: Image.memory(_albumArt!, fit: BoxFit.cover))
-                  : const Icon(Icons.music_note, size: 100, color: Colors.white54),
             ),
 
             SizedBox(height: size.height * 0.01),
@@ -309,6 +341,9 @@ class _Music_PlayerState extends State<Music_Player> {
                     iconSize: 50,
                     icon: SvgPicture.asset('assets/icons/backPlay.svg', height: 50, width: 50, colorFilter: const ColorFilter.mode(Colors.black, BlendMode.srcIn)),
                     onPressed: () => SpotifySdk.skipPrevious(),
+                    splashColor: Colors.white.withOpacity(0.5),
+                    highlightColor: Colors.white.withOpacity(0.5),
+                    splashRadius: 20,
                   ),
                   
                   IconButton(
@@ -323,12 +358,18 @@ class _Music_PlayerState extends State<Music_Player> {
                         SpotifySdk.pause();
                       }
                     },
+                    splashColor: Colors.white.withOpacity(0.5),
+                    highlightColor: Colors.white.withOpacity(0.5),
+                    splashRadius: 20,
                   ),
                   
                   IconButton(
                     iconSize: 50,
                     icon: SvgPicture.asset('assets/icons/next.svg', height: 50, width: 50, colorFilter: const ColorFilter.mode(Colors.black, BlendMode.srcIn)),
                     onPressed: () => SpotifySdk.skipNext(),
+                    splashColor: Colors.white.withOpacity(0.5),
+                    highlightColor: Colors.white.withOpacity(0.5),
+                    splashRadius: 20,
                   ),
                 ],
               ),
